@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum POS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/pos.css" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <main class="shell">
+    <header class="topbar glass">
+      <div>
+        <p class="eyebrow">Retail POS / management</p>
+        <h1>Quantum POS</h1>
+        <p class="subtitle">Cashier screen, cart totals, payments, reports, inventory, terminals, and forecasting.</p>
+      </div>
+      <div class="topbar-actions">
+        <span id="connectionPill" class="pill pill-neutral">Offline</span>
+        <button id="refreshAllBtn" class="ghost" type="button">Refresh data</button>
+      </div>
+    </header>
+
+    <section class="glass login-strip">
+      <div class="login-copy">
+        <h2>Employee access</h2>
+        <p class="muted">Sign in with your employee account or bootstrap one if this is a fresh deployment.</p>
+      </div>
+      <form id="loginForm" class="inline-form login-form">
+        <label>
+          <span>Email</span>
+          <input id="loginEmail" type="email" placeholder="manager@store.com" required />
+        </label>
+        <label>
+          <span>Password</span>
+          <input id="loginPassword" type="password" placeholder="••••••••" required />
+        </label>
+        <button type="submit">Sign in</button>
+      </form>
+      <div class="auth-meta">
+        <span id="employeeMeta">No user loaded</span>
+        <button id="logoutBtn" type="button" class="ghost">Logout</button>
+      </div>
+    </section>
+
+    <nav class="tabs glass">
+      <button class="tab-btn active" data-tab="cashierTab" type="button">Cashier Dashboard</button>
+      <button class="tab-btn" data-tab="managerTab" type="button">Manager Dashboard</button>
+      <button class="tab-btn" data-tab="adminTab" type="button">Admin Dashboard</button>
+    </nav>
+
+    <section id="cashierTab" class="tab-panel active">
+      <div class="grid two-col cashier-layout">
+        <section class="glass panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Cashier</p>
+              <h2>Scan and Sell</h2>
+            </div>
+            <span id="activeCartPill" class="pill pill-neutral">No active cart</span>
+          </div>
+          <div class="grid two-col compact-grid">
+            <label>
+              <span>Store</span>
+              <select id="storeSelect"></select>
+            </label>
+            <label>
+              <span>Terminal</span>
+              <select id="terminalSelect"></select>
+            </label>
+          </div>
+          <div class="sale-actions">
+            <button id="createCartBtn" type="button">Start new sale</button>
+            <button id="closeCartBtn" type="button" class="ghost">Close cart</button>
+          </div>
+          <div class="scan-row">
+            <label>
+              <span>Scan product</span>
+              <input id="scanInput" placeholder="Scan barcode or type product name" />
+            </label>
+            <button id="addScanBtn" type="button">Add</button>
+          </div>
+          <div class="cart-summary-grid">
+            <div><span>Subtotal</span><strong id="subtotalValue">0.00</strong></div>
+            <div><span>Tax</span><strong id="taxValue">0.00</strong></div>
+            <div><span>Total</span><strong id="totalValue">0.00</strong></div>
+          </div>
+        </section>
+
+        <section class="glass panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Checkout</p>
+              <h2>Pay and Print</h2>
+            </div>
+            <span id="cartStatusPill" class="pill pill-neutral">Waiting</span>
+          </div>
+          <form id="paymentForm" class="stacked-form">
+            <label>
+              <span>Total due ($ / EUR equivalent)</span>
+              <input id="paymentAmount" type="number" step="0.01" min="0" placeholder="Auto-filled" />
+            </label>
+            <div class="sale-actions">
+              <button id="checkoutBtn" type="submit">Pay</button>
+              <button id="printReceiptBtn" class="ghost" type="button">Print receipt</button>
+            </div>
+          </form>
+          <div id="paymentResult" class="result-box"></div>
+          <div class="quick-example">
+            <p class="muted">Example cart</p>
+            <p>Milk, Bread, Sugar</p>
+            <strong>Total: $25.40</strong>
+          </div>
+        </section>
+      </div>
+
+      <section class="grid two-col cashier-main">
+        <article class="glass panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Products</p>
+              <h2>Catalog</h2>
+            </div>
+            <input id="productSearch" class="search-input" placeholder="Search products or barcode" />
+          </div>
+          <div id="productGrid" class="product-grid"></div>
+        </article>
+
+        <article class="glass panel cart-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Basket</p>
+              <h2>Cart</h2>
+            </div>
+            <button id="clearCartBtn" class="ghost" type="button">Clear items</button>
+          </div>
+          <div id="cartItems" class="cart-items"></div>
+        </article>
+      </section>
+    </section>
+
+    <section id="managerTab" class="tab-panel">
+      <section class="grid metrics-grid">
+        <article class="glass metric-card"><span>Today sales</span><strong id="todaySalesValue">0.00</strong></article>
+        <article class="glass metric-card"><span>Receipts</span><strong id="receiptCount">0</strong></article>
+        <article class="glass metric-card"><span>Low stock</span><strong id="lowStockCount">0</strong></article>
+        <article class="glass metric-card"><span>Active terminals</span><strong id="activeTerminalCount">0</strong></article>
+      </section>
+
+      <section class="grid two-col dashboard-grid">
+        <article class="glass panel" id="reportsPanel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Reports</p>
+              <h2>Sales & receipts</h2>
+            </div>
+            <button id="refreshReportsBtn" class="ghost" type="button">Refresh</button>
+          </div>
+          <div id="reportList" class="stack-list"></div>
+        </article>
+
+        <article class="glass panel" id="inventoryPanel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Inventory</p>
+              <h2>Stock</h2>
+            </div>
+            <button id="refreshInventoryBtn" class="ghost" type="button">Refresh</button>
+          </div>
+          <div id="inventoryTable" class="table-wrap"></div>
+        </article>
+      </section>
+
+      <section class="grid two-col dashboard-grid">
+        <article class="glass panel" id="terminalPanel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Operations</p>
+              <h2>Terminals</h2>
+            </div>
+            <button id="refreshTerminalsBtn" class="ghost" type="button">Refresh</button>
+          </div>
+          <div id="terminalList" class="stack-list"></div>
+        </article>
+
+        <article class="glass panel" id="forecastPanel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">AI forecasting</p>
+              <h2>Warnings</h2>
+            </div>
+            <button id="refreshForecastBtn" class="ghost" type="button">Refresh</button>
+          </div>
+          <div id="warningList" class="stack-list"></div>
+        </article>
+      </section>
+    </section>
+
+    <section id="adminTab" class="tab-panel">
+      <section class="glass panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Administration</p>
+            <h2>Bootstrap employee account</h2>
+          </div>
+          <span class="muted">Use once on a fresh deployment</span>
+        </div>
+        <form id="bootstrapForm" class="inline-form login-form">
+          <label>
+            <span>Full name</span>
+            <input id="bootstrapName" placeholder="Admin User" />
+          </label>
+          <label>
+            <span>Email</span>
+            <input id="bootstrapEmail" type="email" placeholder="admin@store.com" />
+          </label>
+          <label>
+            <span>Password</span>
+            <input id="bootstrapPassword" type="password" placeholder="Set a strong password" />
+          </label>
+          <label>
+            <span>Store ID</span>
+            <input id="bootstrapStoreId" type="number" min="1" placeholder="1" />
+          </label>
+          <label>
+            <span>Role</span>
+            <select id="bootstrapRole">
+              <option value="admin">admin</option>
+              <option value="manager">manager</option>
+              <option value="cashier">cashier</option>
+            </select>
+          </label>
+          <button type="submit">Create employee</button>
+        </form>
+        <div id="bootstrapResult" class="result-box"></div>
+      </section>
+
+      <section class="grid two-col dashboard-grid">
+        <article class="glass panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Deployment</p>
+              <h2>Real-world use</h2>
+            </div>
+          </div>
+          <ul class="feature-list">
+            <li>Single Express app serving API and POS UI.</li>
+            <li>Token-based employee login with cashier and manager access.</li>
+            <li>Receipt generation, inventory movement tracking, and forecast warnings.</li>
+            <li>Deployment-friendly health endpoint at <code>/health</code>.</li>
+          </ul>
+        </article>
+
+        <article class="glass panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Runbook</p>
+              <h2>Deployment steps</h2>
+            </div>
+          </div>
+            <pre class="code-block">npm install
+        npm start
+
+        # Docker
+        docker build -t quantum-pos .
+        docker run -p 3000:3000 --env-file .env quantum-pos</pre>
+        </article>
+      </section>
+
+      <section class="grid two-col dashboard-grid">
+        <article class="glass panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Architecture</p>
+              <h2>Best-fit frontend stacks</h2>
+            </div>
+          </div>
+          <div class="stack-list">
+            <div class="info-row"><strong>React</strong><span>Best for large cashier screens and reusable components.</span></div>
+            <div class="info-row"><strong>Next.js</strong><span>Best for production deployment, routing, and server rendering.</span></div>
+            <div class="info-row"><strong>Vue</strong><span>Best for fast admin dashboards and lighter learning curve.</span></div>
+            <div class="info-row"><strong>Svelte</strong><span>Best for a compact POS app with minimal runtime overhead.</span></div>
+          </div>
+        </article>
+
+        <article class="glass panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Status</p>
+              <h2>Production checklist</h2>
+            </div>
+          </div>
+          <div class="stack-list">
+            <div class="check-item"><span>API + UI reachable</span><strong>Yes</strong></div>
+            <div class="check-item"><span>Employee login</span><strong>Yes</strong></div>
+            <div class="check-item"><span>Cashier flow</span><strong>Yes</strong></div>
+            <div class="check-item"><span>Management dashboard</span><strong>Yes</strong></div>
+            <div class="check-item"><span>Docker-friendly</span><strong>Yes</strong></div>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <script src="/pos-app.js"></script>
+</body>
+</html>

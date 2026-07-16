@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        Int       @id @default(autoincrement())
+  name      String
+  address   String
+  city      String
+  terminals Terminal[]
+  products  Product[]
+  carts     Cart[]
+  employees Employee[]
+  receipts  Receipt[]
+  reports   SalesReport[]
+  loyalty   LoyaltyAccount[]
+  loyaltyTransactions LoyaltyTransaction[]
+  inventory InventoryMovement[]
+  syncJobs  OfflineSyncEvent[]
+  forecasts SalesForecast[]
+}
+
+model Terminal {
+  id        Int    @id @default(autoincrement())
+  store     Store  @relation(fields: [storeId], references: [id])
+  storeId   Int
+  type      String
+  status    String
+  carts     Cart[]
+}
+
+model Product {
+  id        Int     @id @default(autoincrement())
+  barcode   String  @unique
+  name      String
+  price     Float
+  vatRate   Float
+  sku       String? @unique
+  stockQty  Int     @default(0)
+  reorderLevel Int  @default(10)
+  isActive  Boolean @default(true)
+  store     Store   @relation(fields: [storeId], references: [id])
+  storeId   Int
+  cartItems CartItem[]
+  inventory InventoryMovement[]
+  forecasts SalesForecast[]
+}
+
+model Cart {
+  id         Int        @id @default(autoincrement())
+  store      Store      @relation(fields: [storeId], references: [id])
+  storeId    Int
+  terminal   Terminal   @relation(fields: [terminalId], references: [id])
+  terminalId Int
+  status     String
+  items      CartItem[]
+  payments   Payment[]
+  receipt    Receipt?
+}
+
+model CartItem {
+  id         Int     @id @default(autoincrement())
+  cart       Cart    @relation(fields: [cartId], references: [id])
+  cartId     Int
+  product    Product @relation(fields: [productId], references: [id])
+  productId  Int
+  qty        Int
+  unitPrice  Float
+  totalPrice Float
+}
+
+model Payment {
+  id          Int    @id @default(autoincrement())
+  cart        Cart   @relation(fields: [cartId], references: [id])
+  cartId      Int
+  method      String
+  provider    String?
+  amount      Float
+  status      String
+  providerTx  String?
+  receipt    Receipt?
+}
+
+model Receipt {
+  id            Int      @id @default(autoincrement())
+  receiptNo     String   @unique
+  store         Store    @relation(fields: [storeId], references: [id])
+  storeId       Int
+  cart          Cart     @relation(fields: [cartId], references: [id])
+  cartId        Int      @unique
+  payment       Payment? @relation(fields: [paymentId], references: [id])
+  paymentId     Int?     @unique
+  issuedAt      DateTime @default(now())
+  currency      String   @default("USD")
+  subtotal      Float
+  taxTotal      Float
+  discountTotal Float    @default(0)
+  total         Float
+  lineItems     Json?
+  loyaltyTransactions LoyaltyTransaction[]
+}
+
+model SalesReport {
+  id               Int      @id @default(autoincrement())
+  store            Store    @relation(fields: [storeId], references: [id])
+  storeId          Int
+  reportDate       DateTime
+  grossSales       Float    @default(0)
+  netSales         Float    @default(0)
+  taxTotal         Float    @default(0)
+  discountsTotal   Float    @default(0)
+  transactionCount Int      @default(0)
+  generatedAt      DateTime @default(now())
+
+  @@unique([storeId, reportDate])
+}
+
+model Employee {
+  id           Int      @id @default(autoincrement())
+  store        Store    @relation(fields: [storeId], references: [id])
+  storeId      Int
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("cashier")
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  inventoryMovements InventoryMovement[]
+}
+
+model LoyaltyAccount {
+  id             Int      @id @default(autoincrement())
+  store          Store    @relation(fields: [storeId], references: [id])
+  storeId        Int
+  memberCode     String   @unique @default(cuid())
+  customerName   String?
+  customerEmail  String?  @unique
+  customerPhone  String?  @unique
+  pointsBalance  Int      @default(0)
+  lifetimePoints Int      @default(0)
+  tier           String   @default("standard")
+  status         String   @default("active")
+  joinedAt       DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+  transactions   LoyaltyTransaction[]
+}
+
+model LoyaltyTransaction {
+  id               Int             @id @default(autoincrement())
+  loyaltyAccount   LoyaltyAccount  @relation(fields: [loyaltyAccountId], references: [id])
+  loyaltyAccountId Int
+  store            Store           @relation(fields: [storeId], references: [id])
+  storeId          Int
+  receipt          Receipt?        @relation(fields: [receiptId], references: [id])
+  receiptId        Int?
+  pointsDelta      Int
+  reason           String
+  createdAt        DateTime        @default(now())
+}
+
+model InventoryMovement {
+  id            Int      @id @default(autoincrement())
+  store         Store    @relation(fields: [storeId], references: [id])
+  storeId       Int
+  product       Product  @relation(fields: [productId], references: [id])
+  productId     Int
+  employee      Employee? @relation(fields: [employeeId], references: [id])
+  employeeId    Int?
+  movementType  String
+  quantityDelta Int
+  note          String?
+  createdAt     DateTime @default(now())
+}
+
+model OfflineSyncEvent {
+  id            Int      @id @default(autoincrement())
+  store         Store    @relation(fields: [storeId], references: [id])
+  storeId       Int
+  deviceId      String
+  entityName    String
+  entityId      String
+  operation     String
+  payload       Json
+  status        String   @default("pending")
+  attempts      Int      @default(0)
+  lastAttemptAt DateTime?
+  syncedAt      DateTime?
+  createdAt     DateTime @default(now())
+}
+
+model SalesForecast {
+  id               Int      @id @default(autoincrement())
+  store            Store    @relation(fields: [storeId], references: [id])
+  storeId          Int
+  product          Product? @relation(fields: [productId], references: [id])
+  productId        Int?
+  forecastDate     DateTime
+  horizonDays      Int      @default(1)
+  predictedUnits   Float
+  predictedRevenue Float
+  modelName        String?
+  confidence       Float?
+  generatedAt      DateTime @default(now())
+
+  @@unique([storeId, productId, forecastDate, horizonDays])
+}

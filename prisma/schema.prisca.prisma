@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        Int       @id @default(autoincrement())
+  name      String
+  address   String
+  city      String
+  terminals Terminal[]
+  products  Product[]
+  carts     Cart[]
+}
+
+model Terminal {
+  id        Int    @id @default(autoincrement())
+  store     Store  @relation(fields: [storeId], references: [id])
+  storeId   Int
+  type      String
+  status    String
+  carts     Cart[]
+}
+
+model Product {
+  id        Int     @id @default(autoincrement())
+  barcode   String  @unique
+  name      String
+  price     Float
+  vatRate   Float
+  store     Store   @relation(fields: [storeId], references: [id])
+  storeId   Int
+  cartItems CartItem[]
+}
+
+model Cart {
+  id         Int        @id @default(autoincrement())
+  store      Store      @relation(fields: [storeId], references: [id])
+  storeId    Int
+  terminal   Terminal   @relation(fields: [terminalId], references: [id])
+  terminalId Int
+  status     String
+  items      CartItem[]
+  payments   Payment[]
+}
+
+model CartItem {
+  id         Int     @id @default(autoincrement())
+  cart       Cart    @relation(fields: [cartId], references: [id])
+  cartId     Int
+  product    Product @relation(fields: [productId], references: [id])
+  productId  Int
+  qty        Int
+  unitPrice  Float
+  totalPrice Float
+}
+
+model Payment {
+  id          Int    @id @default(autoincrement())
+  cart        Cart   @relation(fields: [cartId], references: [id])
+  cartId      Int
+  method      String
+  provider    String?
+  amount      Float
+  status      String
+  providerTx  String?
+}
