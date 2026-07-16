@@ -158,6 +158,37 @@
     </section>
 
     <section id="managerTab" class="tab-panel">
+      <section class="glass panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow" data-i18n="manager.languagePolicyEyebrow">Localization</p>
+            <h2 data-i18n="manager.languagePolicyTitle">Branch language defaults</h2>
+          </div>
+        </div>
+        <div class="store-lang-form">
+          <label>
+            <span data-i18n="manager.branch">Branch</span>
+            <select id="storeLangStore"></select>
+          </label>
+          <label>
+            <span data-i18n="top.language">Language</span>
+            <select id="storeLangSelect">
+              <option value="en">English</option>
+              <option value="sw">Kiswahili</option>
+              <option value="fr">Francais</option>
+              <option value="es">Espanol</option>
+              <option value="ar">Arabic</option>
+              <option value="de">Deutsch</option>
+              <option value="it">Italiano</option>
+              <option value="pt">Portugues</option>
+            </select>
+          </label>
+          <button id="saveStoreLangBtn" type="button" data-i18n="manager.saveBranchLanguage">Save branch language</button>
+          <button id="clearStoreLangBtn" class="ghost" type="button" data-i18n="manager.clearBranchLanguage">Use auto detection</button>
+        </div>
+        <div id="storeLangResult" class="result-box"></div>
+      </section>
+
       <section class="grid metrics-grid">
         <article class="glass metric-card"><span data-i18n="manager.todaySales">Today sales</span><strong id="todaySalesValue">0.00</strong></article>
         <article class="glass metric-card"><span data-i18n="manager.receipts">Receipts</span><strong id="receiptCount">0</strong></article>

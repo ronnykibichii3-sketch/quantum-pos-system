@@ -1,6 +1,8 @@
 const state = {
   token: localStorage.getItem('qc_token') || '',
   language: localStorage.getItem('qc_lang') || ((navigator.language || 'en').slice(0, 2).toLowerCase()),
+  languageLocked: localStorage.getItem('qc_lang_locked') === '1',
+  storeLanguageMap: {},
   employee: null,
   stores: [],
   terminals: [],
@@ -72,6 +74,11 @@ const I18N = {
     'manager.receipts': 'Receipts',
     'manager.lowStock': 'Low stock',
     'manager.activeTerminals': 'Active terminals',
+    'manager.languagePolicyEyebrow': 'Localization',
+    'manager.languagePolicyTitle': 'Branch language defaults',
+    'manager.branch': 'Branch',
+    'manager.saveBranchLanguage': 'Save branch language',
+    'manager.clearBranchLanguage': 'Use auto detection',
     'manager.salesReceipts': 'Sales and receipts',
     'manager.stock': 'Stock',
     'manager.terminals': 'Terminals',
@@ -114,6 +121,8 @@ const I18N = {
     'dynamic.noReceiptPrint': 'No receipt to print yet.',
     'dynamic.allowPopups': 'Allow popups to print receipt.',
     'dynamic.created': 'Created',
+    'dynamic.storeLangSaved': 'Saved language {lang} for {store}',
+    'dynamic.storeLangCleared': 'Auto detection restored for {store}',
     'errors.selectStoreTerminal': 'Select a store and terminal first',
     'errors.productNotFound': 'Product not found',
     'errors.noProductMatch': 'No product matches scan: {scan}',
@@ -246,6 +255,25 @@ const I18N = {
 
 const $ = (id) => document.getElementById(id);
 
+function browserLanguage() {
+  const lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  return SUPPORTED_LANGS.includes(lang) ? lang : 'en';
+}
+
+function readStoreLanguageMap() {
+  try {
+    const raw = localStorage.getItem('qc_store_lang_map') || '{}';
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeStoreLanguageMap() {
+  localStorage.setItem('qc_store_lang_map', JSON.stringify(state.storeLanguageMap));
+}
+
 function activeLanguage() {
   return SUPPORTED_LANGS.includes(state.language) ? state.language : 'en';
 }
@@ -275,11 +303,21 @@ function applyStaticTranslations() {
   });
 }
 
-function setLanguage(nextLang) {
+function setLanguage(nextLang, lockSelection = false) {
   state.language = SUPPORTED_LANGS.includes(nextLang) ? nextLang : 'en';
+  if (lockSelection) {
+    state.languageLocked = true;
+    localStorage.setItem('qc_lang_locked', '1');
+  }
+
   localStorage.setItem('qc_lang', state.language);
   document.documentElement.lang = state.language;
   document.documentElement.dir = state.language === 'ar' ? 'rtl' : 'ltr';
+  const languageSelect = $('languageSelect');
+  if (languageSelect) {
+    languageSelect.value = state.language;
+  }
+
   applyStaticTranslations();
   updateConnectionPill();
   renderProducts();
@@ -288,6 +326,65 @@ function setLanguage(nextLang) {
   renderTerminalsDashboard();
   renderReports();
   renderWarnings();
+}
+
+function inferStoreLanguage(storeId) {
+  const store = state.stores.find((entry) => entry.id === Number(storeId));
+  if (!store) {
+    return null;
+  }
+
+  const fingerprint = `${store.name || ''} ${store.city || ''}`.toLowerCase();
+  if (/torino|roma|milano|napoli|ital/.test(fingerprint)) return 'it';
+  if (/nairobi|mombasa|kisumu|kenya|tanzania|uganda/.test(fingerprint)) return 'sw';
+  if (/madrid|barcelona|sevilla|espan|spain/.test(fingerprint)) return 'es';
+  if (/paris|lyon|marseille|france/.test(fingerprint)) return 'fr';
+  if (/berlin|munich|hamburg|deutsch|germany/.test(fingerprint)) return 'de';
+  if (/porto|lisbon|lisboa|portugal|brasil|brazil/.test(fingerprint)) return 'pt';
+  if (/dubai|riyadh|doha|abu dhabi|cairo/.test(fingerprint)) return 'ar';
+  return null;
+}
+
+function preferredStoreLanguage(storeId) {
+  const explicit = state.storeLanguageMap[String(storeId)];
+  if (SUPPORTED_LANGS.includes(explicit)) {
+    return explicit;
+  }
+
+  return inferStoreLanguage(storeId);
+}
+
+function applyRoleLanguagePolicy(storeId = currentStoreId()) {
+  if (state.languageLocked) {
+    return;
+  }
+
+  const role = state.employee?.role;
+  const browser = browserLanguage();
+  if (role === 'admin' || role === 'manager') {
+    setLanguage(browser, false);
+    return;
+  }
+
+  const branchLang = preferredStoreLanguage(storeId);
+  setLanguage(branchLang || browser, false);
+}
+
+function renderStoreLanguageControls() {
+  const storeSelect = $('storeLangStore');
+  const langSelect = $('storeLangSelect');
+  if (!storeSelect || !langSelect) {
+    return;
+  }
+
+  storeSelect.innerHTML = state.stores.map((store) => `<option value="${store.id}">${store.name} (${store.city})</option>`).join('');
+  const activeStoreId = Number(state.cartDraft.storeId || state.stores[0]?.id || 0);
+  if (activeStoreId) {
+    storeSelect.value = String(activeStoreId);
+  }
+
+  const preferred = preferredStoreLanguage(Number(storeSelect.value)) || browserLanguage();
+  langSelect.value = SUPPORTED_LANGS.includes(preferred) ? preferred : 'en';
 }
 
 function setPill(el, text, tone = 'neutral') {
@@ -400,6 +497,8 @@ function renderStores() {
     state.cartDraft.storeId = state.stores[0].id;
     select.value = String(state.stores[0].id);
   }
+
+  renderStoreLanguageControls();
 }
 
 function renderTerminals() {
@@ -587,12 +686,14 @@ async function loadEmployee() {
     state.employee = null;
     $('employeeMeta').textContent = t('dynamic.noUserLoaded');
     applyRoleAccess();
+    applyRoleLanguagePolicy();
     return;
   }
 
   state.employee = await api('/employees/me');
   $('employeeMeta').textContent = `${state.employee.fullName || t('dynamic.employeeDefault')} · ${state.employee.role || t('dynamic.roleUnknown')}`;
   applyRoleAccess();
+  applyRoleLanguagePolicy();
 }
 
 async function loadPublicData() {
@@ -609,6 +710,7 @@ async function loadPublicData() {
   renderStores();
   renderTerminals();
   renderProducts();
+  applyRoleLanguagePolicy();
 }
 
 async function loadPrivateData() {
@@ -859,10 +961,49 @@ function bindEvents() {
 
   $('refreshAllBtn').addEventListener('click', refreshAll);
   $('languageSelect').addEventListener('change', (event) => {
-    setLanguage(event.target.value);
+    setLanguage(event.target.value, true);
   });
-  $('storeSelect').addEventListener('change', (event) => { state.cartDraft.storeId = event.target.value; });
+  $('storeSelect').addEventListener('change', (event) => {
+    state.cartDraft.storeId = event.target.value;
+    renderStoreLanguageControls();
+    applyRoleLanguagePolicy(Number(event.target.value));
+  });
   $('terminalSelect').addEventListener('change', (event) => { state.cartDraft.terminalId = event.target.value; });
+  $('storeLangStore').addEventListener('change', (event) => {
+    const nextStoreId = Number(event.target.value || 0);
+    const preferred = preferredStoreLanguage(nextStoreId) || browserLanguage();
+    $('storeLangSelect').value = preferred;
+  });
+  $('saveStoreLangBtn').addEventListener('click', () => {
+    const storeId = Number($('storeLangStore').value || 0);
+    if (!storeId) return;
+    const lang = $('storeLangSelect').value;
+    state.storeLanguageMap[String(storeId)] = lang;
+    writeStoreLanguageMap();
+
+    const store = state.stores.find((entry) => entry.id === storeId);
+    $('storeLangResult').innerHTML = `<strong>${t('dynamic.storeLangSaved', { lang: lang.toUpperCase(), store: store?.name || `#${storeId}` })}</strong>`;
+    flash($('storeLangResult'));
+
+    if (Number(state.cartDraft.storeId || 0) === storeId) {
+      applyRoleLanguagePolicy(storeId);
+    }
+  });
+  $('clearStoreLangBtn').addEventListener('click', () => {
+    const storeId = Number($('storeLangStore').value || 0);
+    if (!storeId) return;
+    delete state.storeLanguageMap[String(storeId)];
+    writeStoreLanguageMap();
+    const store = state.stores.find((entry) => entry.id === storeId);
+    $('storeLangResult').innerHTML = `<strong>${t('dynamic.storeLangCleared', { store: store?.name || `#${storeId}` })}</strong>`;
+    flash($('storeLangResult'));
+
+    const preferred = preferredStoreLanguage(storeId) || browserLanguage();
+    $('storeLangSelect').value = preferred;
+    if (Number(state.cartDraft.storeId || 0) === storeId) {
+      applyRoleLanguagePolicy(storeId);
+    }
+  });
   $('productSearch').addEventListener('input', (event) => { state.search = event.target.value; renderProducts(); });
   $('addScanBtn').addEventListener('click', async () => {
     const value = $('scanInput').value;
@@ -942,6 +1083,8 @@ function bindEvents() {
 }
 
 async function init() {
+  state.storeLanguageMap = readStoreLanguageMap();
+
   if (!SUPPORTED_LANGS.includes(state.language)) {
     state.language = 'en';
   }
@@ -951,7 +1094,11 @@ async function init() {
     languageSelect.value = state.language;
   }
 
-  setLanguage(state.language);
+  if (!localStorage.getItem('qc_lang')) {
+    state.language = browserLanguage();
+  }
+
+  setLanguage(state.language, false);
   bindEvents();
   applyRoleAccess();
   await refreshAll();
