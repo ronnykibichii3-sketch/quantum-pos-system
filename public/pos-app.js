@@ -78,6 +78,11 @@ const I18N = {
     'manager.branch': 'Branch',
     'manager.saveBranchLanguage': 'Save branch language',
     'manager.clearBranchLanguage': 'Use auto detection',
+    'manager.branchLanguageOverview': 'Branch language overview',
+    'manager.branchName': 'Branch name',
+    'manager.branchCity': 'City',
+    'manager.languageMode': 'Language mode',
+    'manager.effectiveLanguage': 'Effective language',
     'manager.salesReceipts': 'Sales and receipts',
     'manager.stock': 'Stock',
     'manager.terminals': 'Terminals',
@@ -93,6 +98,7 @@ const I18N = {
     'dynamic.offline': 'Offline',
     'dynamic.noUserLoaded': 'No user loaded',
     'dynamic.noProductsLoaded': 'No products loaded.',
+    'dynamic.noBranchesLoaded': 'No branches loaded yet.',
     'dynamic.noActiveCart': 'No active cart',
     'dynamic.waiting': 'Waiting',
     'dynamic.createSalePrompt': 'Create a sale to begin adding items.',
@@ -122,6 +128,8 @@ const I18N = {
     'dynamic.created': 'Created',
     'dynamic.storeLangSaved': 'Saved language {lang} for {store}',
     'dynamic.storeLangCleared': 'Auto detection restored for {store}',
+    'dynamic.modeAuto': 'Auto-detect',
+    'dynamic.modeManual': 'Manual',
     'errors.selectStoreTerminal': 'Select a store and terminal first',
     'errors.productNotFound': 'Product not found',
     'errors.noProductMatch': 'No product matches scan: {scan}',
@@ -371,6 +379,50 @@ function renderStoreLanguageControls() {
 
   const preferred = preferredStoreLanguage(Number(storeSelect.value)) || browserLanguage();
   langSelect.value = SUPPORTED_LANGS.includes(preferred) ? preferred : 'en';
+
+  renderStoreLanguageMatrix();
+}
+
+function renderStoreLanguageMatrix() {
+  const host = $('storeLangMatrix');
+  if (!host) {
+    return;
+  }
+
+  if (!state.stores.length) {
+    host.innerHTML = `<p class="muted">${t('dynamic.noBranchesLoaded')}</p>`;
+    return;
+  }
+
+  host.innerHTML = `
+    <div class="panel-head">
+      <h2>${t('manager.branchLanguageOverview')}</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>${t('manager.branchName')}</th>
+          <th>${t('manager.branchCity')}</th>
+          <th>${t('manager.languageMode')}</th>
+          <th>${t('manager.effectiveLanguage')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${state.stores.map((store) => {
+          const isManual = SUPPORTED_LANGS.includes(store.defaultLanguage || '');
+          const effective = preferredStoreLanguage(store.id) || browserLanguage();
+          return `
+            <tr>
+              <td>${store.name}</td>
+              <td>${store.city || '-'}</td>
+              <td>${isManual ? t('dynamic.modeManual') : t('dynamic.modeAuto')}</td>
+              <td>${String(effective).toUpperCase()}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 function setPill(el, text, tone = 'neutral') {

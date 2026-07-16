@@ -73,6 +73,10 @@ button, input, select { font: inherit; }
   align-items: end;
 }
 
+.branch-lang-wrap {
+  margin-top: 14px;
+}
+
 .lang-picker {
   display: grid;
   gap: 4px;
