@@ -84,6 +84,11 @@ npm start
 - Cashier dashboard loads
 - Start sale -> add item -> pay works
 - Manager dashboard shows branch language overview table
+- Run one-command smoke check:
+  ```bash
+  npm run smoke
+  ```
+  Expected: all lines show `PASS` and final line shows `Smoke check passed.`
 
 ## Update Existing Install
 ```bash
