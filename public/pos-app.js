@@ -2,7 +2,6 @@ const state = {
   token: localStorage.getItem('qc_token') || '',
   language: localStorage.getItem('qc_lang') || ((navigator.language || 'en').slice(0, 2).toLowerCase()),
   languageLocked: localStorage.getItem('qc_lang_locked') === '1',
-  storeLanguageMap: {},
   employee: null,
   stores: [],
   terminals: [],
@@ -260,20 +259,6 @@ function browserLanguage() {
   return SUPPORTED_LANGS.includes(lang) ? lang : 'en';
 }
 
-function readStoreLanguageMap() {
-  try {
-    const raw = localStorage.getItem('qc_store_lang_map') || '{}';
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function writeStoreLanguageMap() {
-  localStorage.setItem('qc_store_lang_map', JSON.stringify(state.storeLanguageMap));
-}
-
 function activeLanguage() {
   return SUPPORTED_LANGS.includes(state.language) ? state.language : 'en';
 }
@@ -346,7 +331,8 @@ function inferStoreLanguage(storeId) {
 }
 
 function preferredStoreLanguage(storeId) {
-  const explicit = state.storeLanguageMap[String(storeId)];
+  const store = state.stores.find((entry) => entry.id === Number(storeId));
+  const explicit = store?.defaultLanguage || null;
   if (SUPPORTED_LANGS.includes(explicit)) {
     return explicit;
   }
@@ -974,12 +960,17 @@ function bindEvents() {
     const preferred = preferredStoreLanguage(nextStoreId) || browserLanguage();
     $('storeLangSelect').value = preferred;
   });
-  $('saveStoreLangBtn').addEventListener('click', () => {
+  $('saveStoreLangBtn').addEventListener('click', async () => {
     const storeId = Number($('storeLangStore').value || 0);
     if (!storeId) return;
     const lang = $('storeLangSelect').value;
-    state.storeLanguageMap[String(storeId)] = lang;
-    writeStoreLanguageMap();
+
+    const updated = await api(`/stores/${storeId}/language`, {
+      method: 'PATCH',
+      body: JSON.stringify({ defaultLanguage: lang })
+    });
+
+    state.stores = state.stores.map((entry) => (entry.id === storeId ? { ...entry, defaultLanguage: updated.defaultLanguage } : entry));
 
     const store = state.stores.find((entry) => entry.id === storeId);
     $('storeLangResult').innerHTML = `<strong>${t('dynamic.storeLangSaved', { lang: lang.toUpperCase(), store: store?.name || `#${storeId}` })}</strong>`;
@@ -989,11 +980,16 @@ function bindEvents() {
       applyRoleLanguagePolicy(storeId);
     }
   });
-  $('clearStoreLangBtn').addEventListener('click', () => {
+  $('clearStoreLangBtn').addEventListener('click', async () => {
     const storeId = Number($('storeLangStore').value || 0);
     if (!storeId) return;
-    delete state.storeLanguageMap[String(storeId)];
-    writeStoreLanguageMap();
+
+    await api(`/stores/${storeId}/language`, {
+      method: 'PATCH',
+      body: JSON.stringify({ defaultLanguage: null })
+    });
+
+    state.stores = state.stores.map((entry) => (entry.id === storeId ? { ...entry, defaultLanguage: null } : entry));
     const store = state.stores.find((entry) => entry.id === storeId);
     $('storeLangResult').innerHTML = `<strong>${t('dynamic.storeLangCleared', { store: store?.name || `#${storeId}` })}</strong>`;
     flash($('storeLangResult'));
@@ -1083,8 +1079,6 @@ function bindEvents() {
 }
 
 async function init() {
-  state.storeLanguageMap = readStoreLanguageMap();
-
   if (!SUPPORTED_LANGS.includes(state.language)) {
     state.language = 'en';
   }

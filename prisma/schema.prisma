@@ -12,6 +12,7 @@ model Store {
   name      String
   address   String
   city      String
+  defaultLanguage String?
   terminals Terminal[]
   products  Product[]
   carts     Cart[]
