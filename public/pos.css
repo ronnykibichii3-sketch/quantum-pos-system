@@ -66,6 +66,19 @@ button, input, select { font: inherit; }
 
 .topbar-actions, .auth-meta, .sale-actions, .login-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
+.lang-picker {
+  display: grid;
+  gap: 4px;
+  min-width: 170px;
+}
+
+.lang-picker span {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .login-strip {
   display: grid;
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr) auto;

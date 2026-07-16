@@ -16,42 +16,55 @@
   <main class="shell">
     <header class="topbar glass">
       <div>
-        <p class="eyebrow">Retail POS / management</p>
+        <p class="eyebrow" data-i18n="top.eyebrow">Retail POS / management</p>
         <h1>Quantum POS</h1>
-        <p class="subtitle">Cashier screen, cart totals, payments, reports, inventory, terminals, and forecasting.</p>
+        <p class="subtitle" data-i18n="top.subtitle">Cashier screen, cart totals, payments, reports, inventory, terminals, and forecasting.</p>
       </div>
       <div class="topbar-actions">
+        <label class="lang-picker" for="languageSelect">
+          <span data-i18n="top.language">Language</span>
+          <select id="languageSelect">
+            <option value="en">English</option>
+            <option value="sw">Kiswahili</option>
+            <option value="fr">Francais</option>
+            <option value="es">Espanol</option>
+            <option value="ar">Arabic</option>
+            <option value="de">Deutsch</option>
+            <option value="it">Italiano</option>
+            <option value="pt">Portugues</option>
+          </select>
+        </label>
         <span id="connectionPill" class="pill pill-neutral">Offline</span>
-        <button id="refreshAllBtn" class="ghost" type="button">Refresh data</button>
+        <button id="refreshAllBtn" class="ghost" type="button" data-i18n="top.refresh">Refresh data</button>
       </div>
     </header>
 
     <section class="glass login-strip">
       <div class="login-copy">
-        <h2>Employee access</h2>
-        <p class="muted">Sign in with your employee account or bootstrap one if this is a fresh deployment.</p>
+        <h2 data-i18n="login.title">Employee access</h2>
+        <p class="muted" data-i18n="login.subtitle">Sign in with your employee account or bootstrap one if this is a fresh deployment.</p>
       </div>
       <form id="loginForm" class="inline-form login-form">
         <label>
-          <span>Email</span>
-          <input id="loginEmail" type="email" placeholder="manager@store.com" required />
+          <span data-i18n="common.email">Email</span>
+          <input id="loginEmail" type="email" placeholder="manager@store.com" data-i18n-placeholder="login.emailPlaceholder" required />
         </label>
         <label>
-          <span>Password</span>
-          <input id="loginPassword" type="password" placeholder="••••••••" required />
+          <span data-i18n="common.password">Password</span>
+          <input id="loginPassword" type="password" placeholder="••••••••" data-i18n-placeholder="login.passwordPlaceholder" required />
         </label>
-        <button type="submit">Sign in</button>
+        <button type="submit" data-i18n="login.signIn">Sign in</button>
       </form>
       <div class="auth-meta">
         <span id="employeeMeta">No user loaded</span>
-        <button id="logoutBtn" type="button" class="ghost">Logout</button>
+        <button id="logoutBtn" type="button" class="ghost" data-i18n="login.logout">Logout</button>
       </div>
     </section>
 
     <nav class="tabs glass">
-      <button class="tab-btn active" data-tab="cashierTab" type="button">Cashier Dashboard</button>
-      <button class="tab-btn" data-tab="managerTab" type="button">Manager Dashboard</button>
-      <button class="tab-btn" data-tab="adminTab" type="button">Admin Dashboard</button>
+      <button class="tab-btn active" data-tab="cashierTab" type="button" data-i18n="tabs.cashier">Cashier Dashboard</button>
+      <button class="tab-btn" data-tab="managerTab" type="button" data-i18n="tabs.manager">Manager Dashboard</button>
+      <button class="tab-btn" data-tab="adminTab" type="button" data-i18n="tabs.admin">Admin Dashboard</button>
     </nav>
 
     <section id="cashierTab" class="tab-panel active">
@@ -60,35 +73,35 @@
           <div class="panel-head">
             <div>
               <p class="eyebrow">Cashier</p>
-              <h2>Scan and Sell</h2>
+              <h2 data-i18n="cashier.scanSell">Scan and Sell</h2>
             </div>
             <span id="activeCartPill" class="pill pill-neutral">No active cart</span>
           </div>
           <div class="grid two-col compact-grid">
             <label>
-              <span>Store</span>
+              <span data-i18n="common.store">Store</span>
               <select id="storeSelect"></select>
             </label>
             <label>
-              <span>Terminal</span>
+              <span data-i18n="common.terminal">Terminal</span>
               <select id="terminalSelect"></select>
             </label>
           </div>
           <div class="sale-actions">
-            <button id="createCartBtn" type="button">Start new sale</button>
-            <button id="closeCartBtn" type="button" class="ghost">Close cart</button>
+            <button id="createCartBtn" type="button" data-i18n="cashier.startSale">Start new sale</button>
+            <button id="closeCartBtn" type="button" class="ghost" data-i18n="cashier.closeCart">Close cart</button>
           </div>
           <div class="scan-row">
             <label>
-              <span>Scan product</span>
-              <input id="scanInput" placeholder="Scan barcode or type product name" />
+              <span data-i18n="cashier.scanProduct">Scan product</span>
+              <input id="scanInput" placeholder="Scan barcode or type product name" data-i18n-placeholder="cashier.scanPlaceholder" />
             </label>
-            <button id="addScanBtn" type="button">Add</button>
+            <button id="addScanBtn" type="button" data-i18n="common.add">Add</button>
           </div>
           <div class="cart-summary-grid">
-            <div><span>Subtotal</span><strong id="subtotalValue">0.00</strong></div>
-            <div><span>Tax</span><strong id="taxValue">0.00</strong></div>
-            <div><span>Total</span><strong id="totalValue">0.00</strong></div>
+            <div><span data-i18n="cashier.subtotal">Subtotal</span><strong id="subtotalValue">0.00</strong></div>
+            <div><span data-i18n="cashier.tax">Tax</span><strong id="taxValue">0.00</strong></div>
+            <div><span data-i18n="cashier.total">Total</span><strong id="totalValue">0.00</strong></div>
           </div>
         </section>
 
@@ -96,23 +109,23 @@
           <div class="panel-head">
             <div>
               <p class="eyebrow">Checkout</p>
-              <h2>Pay and Print</h2>
+              <h2 data-i18n="cashier.payPrint">Pay and Print</h2>
             </div>
             <span id="cartStatusPill" class="pill pill-neutral">Waiting</span>
           </div>
           <form id="paymentForm" class="stacked-form">
             <label>
-              <span>Total due ($ / EUR equivalent)</span>
-              <input id="paymentAmount" type="number" step="0.01" min="0" placeholder="Auto-filled" />
+              <span data-i18n="cashier.totalDue">Total due ($ / EUR equivalent)</span>
+              <input id="paymentAmount" type="number" step="0.01" min="0" placeholder="Auto-filled" data-i18n-placeholder="cashier.autoFilled" />
             </label>
             <div class="sale-actions">
-              <button id="checkoutBtn" type="submit">Pay</button>
-              <button id="printReceiptBtn" class="ghost" type="button">Print receipt</button>
+              <button id="checkoutBtn" type="submit" data-i18n="cashier.pay">Pay</button>
+              <button id="printReceiptBtn" class="ghost" type="button" data-i18n="cashier.printReceipt">Print receipt</button>
             </div>
           </form>
           <div id="paymentResult" class="result-box"></div>
           <div class="quick-example">
-            <p class="muted">Example cart</p>
+            <p class="muted" data-i18n="cashier.exampleCart">Example cart</p>
             <p>Milk, Bread, Sugar</p>
             <strong>Total: $25.40</strong>
           </div>
@@ -124,9 +137,9 @@
           <div class="panel-head">
             <div>
               <p class="eyebrow">Products</p>
-              <h2>Catalog</h2>
+              <h2 data-i18n="cashier.catalog">Catalog</h2>
             </div>
-            <input id="productSearch" class="search-input" placeholder="Search products or barcode" />
+            <input id="productSearch" class="search-input" placeholder="Search products or barcode" data-i18n-placeholder="cashier.searchProducts" />
           </div>
           <div id="productGrid" class="product-grid"></div>
         </article>
@@ -135,9 +148,9 @@
           <div class="panel-head">
             <div>
               <p class="eyebrow">Basket</p>
-              <h2>Cart</h2>
+              <h2 data-i18n="cashier.cart">Cart</h2>
             </div>
-            <button id="clearCartBtn" class="ghost" type="button">Clear items</button>
+            <button id="clearCartBtn" class="ghost" type="button" data-i18n="cashier.clearItems">Clear items</button>
           </div>
           <div id="cartItems" class="cart-items"></div>
         </article>
@@ -146,10 +159,10 @@
 
     <section id="managerTab" class="tab-panel">
       <section class="grid metrics-grid">
-        <article class="glass metric-card"><span>Today sales</span><strong id="todaySalesValue">0.00</strong></article>
-        <article class="glass metric-card"><span>Receipts</span><strong id="receiptCount">0</strong></article>
-        <article class="glass metric-card"><span>Low stock</span><strong id="lowStockCount">0</strong></article>
-        <article class="glass metric-card"><span>Active terminals</span><strong id="activeTerminalCount">0</strong></article>
+        <article class="glass metric-card"><span data-i18n="manager.todaySales">Today sales</span><strong id="todaySalesValue">0.00</strong></article>
+        <article class="glass metric-card"><span data-i18n="manager.receipts">Receipts</span><strong id="receiptCount">0</strong></article>
+        <article class="glass metric-card"><span data-i18n="manager.lowStock">Low stock</span><strong id="lowStockCount">0</strong></article>
+        <article class="glass metric-card"><span data-i18n="manager.activeTerminals">Active terminals</span><strong id="activeTerminalCount">0</strong></article>
       </section>
 
       <section class="grid two-col dashboard-grid">
@@ -157,9 +170,9 @@
           <div class="panel-head">
             <div>
               <p class="eyebrow">Reports</p>
-              <h2>Sales & receipts</h2>
+              <h2 data-i18n="manager.salesReceipts">Sales and receipts</h2>
             </div>
-            <button id="refreshReportsBtn" class="ghost" type="button">Refresh</button>
+            <button id="refreshReportsBtn" class="ghost" type="button" data-i18n="common.refresh">Refresh</button>
           </div>
           <div id="reportList" class="stack-list"></div>
         </article>
@@ -168,9 +181,9 @@
           <div class="panel-head">
             <div>
               <p class="eyebrow">Inventory</p>
-              <h2>Stock</h2>
+              <h2 data-i18n="manager.stock">Stock</h2>
             </div>
-            <button id="refreshInventoryBtn" class="ghost" type="button">Refresh</button>
+            <button id="refreshInventoryBtn" class="ghost" type="button" data-i18n="common.refresh">Refresh</button>
           </div>
           <div id="inventoryTable" class="table-wrap"></div>
         </article>
@@ -181,9 +194,9 @@
           <div class="panel-head">
             <div>
               <p class="eyebrow">Operations</p>
-              <h2>Terminals</h2>
+              <h2 data-i18n="manager.terminals">Terminals</h2>
             </div>
-            <button id="refreshTerminalsBtn" class="ghost" type="button">Refresh</button>
+            <button id="refreshTerminalsBtn" class="ghost" type="button" data-i18n="common.refresh">Refresh</button>
           </div>
           <div id="terminalList" class="stack-list"></div>
         </article>
@@ -192,9 +205,9 @@
           <div class="panel-head">
             <div>
               <p class="eyebrow">AI forecasting</p>
-              <h2>Warnings</h2>
+              <h2 data-i18n="manager.warnings">Warnings</h2>
             </div>
-            <button id="refreshForecastBtn" class="ghost" type="button">Refresh</button>
+            <button id="refreshForecastBtn" class="ghost" type="button" data-i18n="common.refresh">Refresh</button>
           </div>
           <div id="warningList" class="stack-list"></div>
         </article>
@@ -206,36 +219,36 @@
         <div class="panel-head">
           <div>
             <p class="eyebrow">Administration</p>
-            <h2>Bootstrap employee account</h2>
+            <h2 data-i18n="admin.bootstrapTitle">Bootstrap employee account</h2>
           </div>
-          <span class="muted">Use once on a fresh deployment</span>
+          <span class="muted" data-i18n="admin.useOnce">Use once on a fresh deployment</span>
         </div>
         <form id="bootstrapForm" class="inline-form login-form">
           <label>
-            <span>Full name</span>
-            <input id="bootstrapName" placeholder="Admin User" />
+            <span data-i18n="admin.fullName">Full name</span>
+            <input id="bootstrapName" placeholder="Admin User" data-i18n-placeholder="admin.fullNamePlaceholder" />
           </label>
           <label>
-            <span>Email</span>
-            <input id="bootstrapEmail" type="email" placeholder="admin@store.com" />
+            <span data-i18n="common.email">Email</span>
+            <input id="bootstrapEmail" type="email" placeholder="admin@store.com" data-i18n-placeholder="admin.emailPlaceholder" />
           </label>
           <label>
-            <span>Password</span>
-            <input id="bootstrapPassword" type="password" placeholder="Set a strong password" />
+            <span data-i18n="common.password">Password</span>
+            <input id="bootstrapPassword" type="password" placeholder="Set a strong password" data-i18n-placeholder="admin.passwordPlaceholder" />
           </label>
           <label>
-            <span>Store ID</span>
+            <span data-i18n="common.storeId">Store ID</span>
             <input id="bootstrapStoreId" type="number" min="1" placeholder="1" />
           </label>
           <label>
-            <span>Role</span>
+            <span data-i18n="common.role">Role</span>
             <select id="bootstrapRole">
               <option value="admin">admin</option>
               <option value="manager">manager</option>
               <option value="cashier">cashier</option>
             </select>
           </label>
-          <button type="submit">Create employee</button>
+          <button type="submit" data-i18n="admin.createEmployee">Create employee</button>
         </form>
         <div id="bootstrapResult" class="result-box"></div>
       </section>

@@ -1,5 +1,6 @@
 const state = {
   token: localStorage.getItem('qc_token') || '',
+  language: localStorage.getItem('qc_lang') || ((navigator.language || 'en').slice(0, 2).toLowerCase()),
   employee: null,
   stores: [],
   terminals: [],
@@ -14,7 +15,280 @@ const state = {
   lastReceipt: null
 };
 
+const SUPPORTED_LANGS = ['en', 'sw', 'fr', 'es', 'ar', 'de', 'it', 'pt'];
+const LANGUAGE_LOCALE = {
+  en: 'en-US',
+  sw: 'sw-KE',
+  fr: 'fr-FR',
+  es: 'es-ES',
+  ar: 'ar',
+  de: 'de-DE',
+  it: 'it-IT',
+  pt: 'pt-PT'
+};
+
+const I18N = {
+  en: {
+    'top.eyebrow': 'Retail POS / management',
+    'top.subtitle': 'Cashier screen, cart totals, payments, reports, inventory, terminals, and forecasting.',
+    'top.language': 'Language',
+    'top.refresh': 'Refresh data',
+    'login.title': 'Employee access',
+    'login.subtitle': 'Sign in with your employee account or bootstrap one if this is a fresh deployment.',
+    'login.emailPlaceholder': 'manager@store.com',
+    'login.passwordPlaceholder': '••••••••',
+    'login.signIn': 'Sign in',
+    'login.logout': 'Logout',
+    'tabs.cashier': 'Cashier Dashboard',
+    'tabs.manager': 'Manager Dashboard',
+    'tabs.admin': 'Admin Dashboard',
+    'common.email': 'Email',
+    'common.password': 'Password',
+    'common.store': 'Store',
+    'common.terminal': 'Terminal',
+    'common.add': 'Add',
+    'common.refresh': 'Refresh',
+    'common.storeId': 'Store ID',
+    'common.role': 'Role',
+    'cashier.scanSell': 'Scan and Sell',
+    'cashier.startSale': 'Start new sale',
+    'cashier.closeCart': 'Close cart',
+    'cashier.scanProduct': 'Scan product',
+    'cashier.scanPlaceholder': 'Scan barcode or type product name',
+    'cashier.subtotal': 'Subtotal',
+    'cashier.tax': 'Tax',
+    'cashier.total': 'Total',
+    'cashier.payPrint': 'Pay and Print',
+    'cashier.totalDue': 'Total due ($ / EUR equivalent)',
+    'cashier.autoFilled': 'Auto-filled',
+    'cashier.pay': 'Pay',
+    'cashier.printReceipt': 'Print receipt',
+    'cashier.exampleCart': 'Example cart',
+    'cashier.catalog': 'Catalog',
+    'cashier.searchProducts': 'Search products or barcode',
+    'cashier.cart': 'Cart',
+    'cashier.clearItems': 'Clear items',
+    'manager.todaySales': 'Today sales',
+    'manager.receipts': 'Receipts',
+    'manager.lowStock': 'Low stock',
+    'manager.activeTerminals': 'Active terminals',
+    'manager.salesReceipts': 'Sales and receipts',
+    'manager.stock': 'Stock',
+    'manager.terminals': 'Terminals',
+    'manager.warnings': 'Warnings',
+    'admin.bootstrapTitle': 'Bootstrap employee account',
+    'admin.useOnce': 'Use once on a fresh deployment',
+    'admin.fullName': 'Full name',
+    'admin.fullNamePlaceholder': 'Admin User',
+    'admin.emailPlaceholder': 'admin@store.com',
+    'admin.passwordPlaceholder': 'Set a strong password',
+    'admin.createEmployee': 'Create employee',
+    'dynamic.online': 'Online',
+    'dynamic.offline': 'Offline',
+    'dynamic.noUserLoaded': 'No user loaded',
+    'dynamic.noProductsLoaded': 'No products loaded.',
+    'dynamic.noActiveCart': 'No active cart',
+    'dynamic.waiting': 'Waiting',
+    'dynamic.createSalePrompt': 'Create a sale to begin adding items.',
+    'dynamic.cartIsEmpty': 'Cart is empty.',
+    'dynamic.stockQty': 'Stock {qty}',
+    'dynamic.remove': 'Remove',
+    'dynamic.noInventoryYet': 'No inventory loaded yet.',
+    'dynamic.tableProduct': 'Product',
+    'dynamic.tableStock': 'Stock',
+    'dynamic.tableReorder': 'Reorder',
+    'dynamic.tableStatus': 'Status',
+    'dynamic.active': 'Active',
+    'dynamic.inactive': 'Inactive',
+    'dynamic.noTerminalsYet': 'No terminals loaded yet.',
+    'dynamic.terminalTitle': 'Terminal #{id}',
+    'dynamic.terminalStore': 'Store {storeId} · {type}',
+    'dynamic.noSalesYet': 'No sales have been recorded yet.',
+    'dynamic.receiptsCount': 'Receipts {count}',
+    'dynamic.noWarningsYet': 'Forecast warnings will appear here after a forecast run.',
+    'dynamic.employeeDefault': 'Employee',
+    'dynamic.roleUnknown': 'role unknown',
+    'dynamic.paid': 'Paid {amount}',
+    'dynamic.receipt': 'Receipt {receiptNo}',
+    'dynamic.paymentId': 'Payment ID {id}',
+    'dynamic.noReceiptPrint': 'No receipt to print yet.',
+    'dynamic.allowPopups': 'Allow popups to print receipt.',
+    'dynamic.created': 'Created',
+    'errors.selectStoreTerminal': 'Select a store and terminal first',
+    'errors.productNotFound': 'Product not found',
+    'errors.noProductMatch': 'No product matches scan: {scan}',
+    'errors.openCartFirst': 'Open a cart first',
+    'errors.loadStoreDataFirst': 'Load store data first',
+    'print.title': 'Receipt {receiptNo}',
+    'print.header': 'Quantum POS Receipt',
+    'print.receiptLabel': 'Receipt:',
+    'print.totalLabel': 'Total:',
+    'print.dateLabel': 'Date:'
+  },
+  sw: {
+    'top.eyebrow': 'POS ya reja reja / usimamizi',
+    'top.subtitle': 'Skrini ya cashier, jumla za kikapu, malipo, ripoti, hisa, terminali, na utabiri.',
+    'top.language': 'Lugha',
+    'top.refresh': 'Sasisha data',
+    'login.title': 'Ufikiaji wa mfanyakazi',
+    'login.subtitle': 'Ingia kwa akaunti ya mfanyakazi au tengeneza akaunti ya kwanza kwa mfumo mpya.',
+    'login.signIn': 'Ingia',
+    'login.logout': 'Toka',
+    'tabs.cashier': 'Dashibodi ya Cashier',
+    'tabs.manager': 'Dashibodi ya Meneja',
+    'tabs.admin': 'Dashibodi ya Admin',
+    'cashier.startSale': 'Anza mauzo mapya',
+    'cashier.closeCart': 'Funga kikapu',
+    'cashier.scanProduct': 'Skani bidhaa',
+    'cashier.pay': 'Lipa',
+    'cashier.printReceipt': 'Chapisha risiti',
+    'dynamic.online': 'Mtandaoni',
+    'dynamic.offline': 'Nje ya mtandao',
+    'dynamic.noUserLoaded': 'Hakuna mtumiaji amepakiwa',
+    'dynamic.noActiveCart': 'Hakuna kikapu kinachoendelea',
+    'dynamic.waiting': 'Inasubiri',
+    'dynamic.createSalePrompt': 'Anza mauzo ili uongeze bidhaa.',
+    'dynamic.cartIsEmpty': 'Kikapu hakina kitu.',
+    'dynamic.noProductsLoaded': 'Hakuna bidhaa zilizopakiwa.',
+    'dynamic.created': 'Imeundwa'
+  },
+  fr: {
+    'top.language': 'Langue',
+    'top.refresh': 'Actualiser les donnees',
+    'login.signIn': 'Se connecter',
+    'login.logout': 'Se deconnecter',
+    'tabs.cashier': 'Tableau caissier',
+    'tabs.manager': 'Tableau manager',
+    'tabs.admin': 'Tableau admin',
+    'cashier.startSale': 'Nouvelle vente',
+    'cashier.closeCart': 'Fermer le panier',
+    'cashier.pay': 'Payer',
+    'cashier.printReceipt': 'Imprimer le recu',
+    'dynamic.online': 'En ligne',
+    'dynamic.offline': 'Hors ligne',
+    'dynamic.noUserLoaded': 'Aucun utilisateur charge',
+    'dynamic.created': 'Cree'
+  },
+  es: {
+    'top.language': 'Idioma',
+    'top.refresh': 'Actualizar datos',
+    'login.signIn': 'Iniciar sesion',
+    'login.logout': 'Cerrar sesion',
+    'tabs.cashier': 'Panel cajero',
+    'tabs.manager': 'Panel gerente',
+    'tabs.admin': 'Panel admin',
+    'cashier.startSale': 'Iniciar venta',
+    'cashier.closeCart': 'Cerrar carrito',
+    'cashier.pay': 'Pagar',
+    'cashier.printReceipt': 'Imprimir recibo',
+    'dynamic.online': 'En linea',
+    'dynamic.offline': 'Sin conexion',
+    'dynamic.noUserLoaded': 'Ningun usuario cargado',
+    'dynamic.created': 'Creado'
+  },
+  ar: {
+    'top.language': 'اللغة',
+    'top.refresh': 'تحديث البيانات',
+    'login.signIn': 'تسجيل الدخول',
+    'login.logout': 'تسجيل الخروج',
+    'tabs.cashier': 'لوحة الكاشير',
+    'tabs.manager': 'لوحة المدير',
+    'tabs.admin': 'لوحة الادمن',
+    'cashier.startSale': 'بدء عملية بيع',
+    'cashier.closeCart': 'اغلاق السلة',
+    'cashier.pay': 'دفع',
+    'cashier.printReceipt': 'طباعة الايصال',
+    'dynamic.online': 'متصل',
+    'dynamic.offline': 'غير متصل',
+    'dynamic.noUserLoaded': 'لا يوجد مستخدم محمل',
+    'dynamic.created': 'تم الانشاء'
+  },
+  de: {
+    'top.language': 'Sprache',
+    'top.refresh': 'Daten aktualisieren',
+    'login.signIn': 'Anmelden',
+    'login.logout': 'Abmelden',
+    'tabs.cashier': 'Kassen Dashboard',
+    'tabs.manager': 'Manager Dashboard',
+    'tabs.admin': 'Admin Dashboard',
+    'cashier.pay': 'Bezahlen',
+    'cashier.printReceipt': 'Beleg drucken',
+    'dynamic.online': 'Online',
+    'dynamic.offline': 'Offline'
+  },
+  it: {
+    'top.language': 'Lingua',
+    'top.refresh': 'Aggiorna dati',
+    'login.signIn': 'Accedi',
+    'login.logout': 'Esci',
+    'tabs.cashier': 'Dashboard cassa',
+    'tabs.manager': 'Dashboard manager',
+    'tabs.admin': 'Dashboard admin',
+    'cashier.pay': 'Paga',
+    'cashier.printReceipt': 'Stampa ricevuta',
+    'dynamic.online': 'Online',
+    'dynamic.offline': 'Offline'
+  },
+  pt: {
+    'top.language': 'Idioma',
+    'top.refresh': 'Atualizar dados',
+    'login.signIn': 'Entrar',
+    'login.logout': 'Sair',
+    'tabs.cashier': 'Painel caixa',
+    'tabs.manager': 'Painel gerente',
+    'tabs.admin': 'Painel admin',
+    'cashier.pay': 'Pagar',
+    'cashier.printReceipt': 'Imprimir recibo',
+    'dynamic.online': 'Online',
+    'dynamic.offline': 'Offline'
+  }
+};
+
 const $ = (id) => document.getElementById(id);
+
+function activeLanguage() {
+  return SUPPORTED_LANGS.includes(state.language) ? state.language : 'en';
+}
+
+function t(key, vars = {}) {
+  const lang = activeLanguage();
+  const dict = I18N[lang] || {};
+  const fallback = I18N.en[key] || key;
+  let phrase = dict[key] || fallback;
+
+  for (const [name, value] of Object.entries(vars)) {
+    phrase = phrase.replace(new RegExp(`\\{${name}\\}`, 'g'), String(value));
+  }
+
+  return phrase;
+}
+
+function applyStaticTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach((node) => {
+    const key = node.getAttribute('data-i18n');
+    node.textContent = t(key);
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => {
+    const key = node.getAttribute('data-i18n-placeholder');
+    node.setAttribute('placeholder', t(key));
+  });
+}
+
+function setLanguage(nextLang) {
+  state.language = SUPPORTED_LANGS.includes(nextLang) ? nextLang : 'en';
+  localStorage.setItem('qc_lang', state.language);
+  document.documentElement.lang = state.language;
+  document.documentElement.dir = state.language === 'ar' ? 'rtl' : 'ltr';
+  applyStaticTranslations();
+  updateConnectionPill();
+  renderProducts();
+  renderCart();
+  renderInventory();
+  renderTerminalsDashboard();
+  renderReports();
+  renderWarnings();
+}
 
 function setPill(el, text, tone = 'neutral') {
   el.textContent = text;
@@ -22,7 +296,8 @@ function setPill(el, text, tone = 'neutral') {
 }
 
 function money(value) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
+  const locale = LANGUAGE_LOCALE[activeLanguage()] || 'en-US';
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(Number(value || 0));
 }
 
 function number(value) {
@@ -145,7 +420,7 @@ function renderProducts() {
   });
 
   if (!products.length) {
-    host.innerHTML = '<p class="muted">No products loaded.</p>';
+    host.innerHTML = `<p class="muted">${t('dynamic.noProductsLoaded')}</p>`;
     return;
   }
 
@@ -153,9 +428,9 @@ function renderProducts() {
     <article class="product-card">
       <strong>${product.name}</strong>
       <div class="muted">${product.barcode}</div>
-      <div>${money(product.price)} · Stock ${product.stockQty}</div>
+      <div>${money(product.price)} · ${t('dynamic.stockQty', { qty: product.stockQty })}</div>
       <div class="actions">
-        <button data-add-product="${product.id}" type="button">Add</button>
+        <button data-add-product="${product.id}" type="button">${t('common.add')}</button>
       </div>
     </article>
   `).join('');
@@ -166,9 +441,9 @@ function renderCart() {
   const cart = state.cart;
 
   if (!cart) {
-    setPill($('activeCartPill'), 'No active cart', 'neutral');
-    setPill($('cartStatusPill'), 'Waiting', 'neutral');
-    host.innerHTML = '<p class="muted">Create a sale to begin adding items.</p>';
+    setPill($('activeCartPill'), t('dynamic.noActiveCart'), 'neutral');
+    setPill($('cartStatusPill'), t('dynamic.waiting'), 'neutral');
+    host.innerHTML = `<p class="muted">${t('dynamic.createSalePrompt')}</p>`;
     $('subtotalValue').textContent = money(0);
     $('taxValue').textContent = money(0);
     $('totalValue').textContent = money(0);
@@ -185,7 +460,7 @@ function renderCart() {
   $('paymentAmount').value = totals.total.toFixed(2);
 
   if (!cart.items?.length) {
-    host.innerHTML = '<p class="muted">Cart is empty.</p>';
+    host.innerHTML = `<p class="muted">${t('dynamic.cartIsEmpty')}</p>`;
     return;
   }
 
@@ -196,7 +471,7 @@ function renderCart() {
       <div class="actions">
         <button type="button" data-qty="${item.id}" data-value="${Math.max(1, Number(item.qty) - 1)}">−</button>
         <button type="button" data-qty="${item.id}" data-value="${Number(item.qty) + 1}">+</button>
-        <button type="button" class="ghost" data-remove="${item.id}">Remove</button>
+        <button type="button" class="ghost" data-remove="${item.id}">${t('dynamic.remove')}</button>
       </div>
     </article>
   `).join('');
@@ -207,7 +482,7 @@ function renderInventory() {
   $('lowStockCount').textContent = String(state.inventory.filter((item) => item.stockQty <= item.reorderLevel).length);
 
   if (!state.inventory.length) {
-    host.innerHTML = '<p class="muted">No inventory loaded yet.</p>';
+    host.innerHTML = `<p class="muted">${t('dynamic.noInventoryYet')}</p>`;
     return;
   }
 
@@ -215,7 +490,7 @@ function renderInventory() {
     <table>
       <thead>
         <tr>
-          <th>Product</th><th>Stock</th><th>Reorder</th><th>Status</th>
+          <th>${t('dynamic.tableProduct')}</th><th>${t('dynamic.tableStock')}</th><th>${t('dynamic.tableReorder')}</th><th>${t('dynamic.tableStatus')}</th>
         </tr>
       </thead>
       <tbody>
@@ -224,7 +499,7 @@ function renderInventory() {
             <td>${item.name}</td>
             <td>${item.stockQty}</td>
             <td>${item.reorderLevel}</td>
-            <td>${item.isActive ? 'Active' : 'Inactive'}</td>
+            <td>${item.isActive ? t('dynamic.active') : t('dynamic.inactive')}</td>
           </tr>
         `).join('')}
       </tbody>
@@ -237,14 +512,14 @@ function renderTerminalsDashboard() {
   $('activeTerminalCount').textContent = String(state.terminals.filter((terminal) => String(terminal.status).toLowerCase() !== 'offline').length);
 
   if (!state.terminals.length) {
-    host.innerHTML = '<p class="muted">No terminals loaded yet.</p>';
+    host.innerHTML = `<p class="muted">${t('dynamic.noTerminalsYet')}</p>`;
     return;
   }
 
   host.innerHTML = state.terminals.map((terminal) => `
     <article class="terminal-item">
-      <strong>Terminal #${terminal.id}</strong>
-      <div class="muted">Store ${terminal.storeId} · ${terminal.type}</div>
+      <strong>${t('dynamic.terminalTitle', { id: terminal.id })}</strong>
+      <div class="muted">${t('dynamic.terminalStore', { storeId: terminal.storeId, type: terminal.type })}</div>
       <div class="actions"><span class="status-tag ${String(terminal.status).toLowerCase().includes('offline') ? 'status-bad' : 'status-good'}">${terminal.status}</span></div>
     </article>
   `).join('');
@@ -272,14 +547,14 @@ function renderReports() {
   $('todaySalesValue').textContent = money(totalsByDay.get(today)?.sales || 0);
 
   if (!sortedDays.length) {
-    host.innerHTML = '<p class="muted">No sales have been recorded yet.</p>';
+    host.innerHTML = `<p class="muted">${t('dynamic.noSalesYet')}</p>`;
     return;
   }
 
   host.innerHTML = sortedDays.map(([day, report]) => `
     <article class="report-item">
       <strong>${day}</strong>
-      <div class="muted">Receipts ${report.receipts}</div>
+      <div class="muted">${t('dynamic.receiptsCount', { count: report.receipts })}</div>
       <div>${money(report.sales)}</div>
     </article>
   `).join('');
@@ -288,7 +563,7 @@ function renderReports() {
 function renderWarnings() {
   const host = $('warningList');
   if (!state.warnings.length) {
-    host.innerHTML = '<p class="muted">Forecast warnings will appear here after a forecast run.</p>';
+    host.innerHTML = `<p class="muted">${t('dynamic.noWarningsYet')}</p>`;
     return;
   }
 
@@ -304,19 +579,19 @@ function renderWarnings() {
 }
 
 function updateConnectionPill() {
-  setPill($('connectionPill'), state.token ? 'Online' : 'Offline', state.token ? 'success' : 'neutral');
+  setPill($('connectionPill'), state.token ? t('dynamic.online') : t('dynamic.offline'), state.token ? 'success' : 'neutral');
 }
 
 async function loadEmployee() {
   if (!state.token) {
     state.employee = null;
-    $('employeeMeta').textContent = 'No user loaded';
+    $('employeeMeta').textContent = t('dynamic.noUserLoaded');
     applyRoleAccess();
     return;
   }
 
   state.employee = await api('/employees/me');
-  $('employeeMeta').textContent = `${state.employee.fullName || 'Employee'} · ${state.employee.role || 'role unknown'}`;
+  $('employeeMeta').textContent = `${state.employee.fullName || t('dynamic.employeeDefault')} · ${state.employee.role || t('dynamic.roleUnknown')}`;
   applyRoleAccess();
 }
 
@@ -381,7 +656,7 @@ async function createCart() {
   const terminalId = Number($('terminalSelect').value || currentTerminalId());
 
   if (!storeId || !terminalId) {
-    throw new Error('Select a store and terminal first');
+    throw new Error(t('errors.selectStoreTerminal'));
   }
 
   state.cart = await api('/carts', {
@@ -411,7 +686,7 @@ async function addProductToCart(productId) {
 
   const product = state.products.find((entry) => entry.id === Number(productId));
   if (!product) {
-    throw new Error('Product not found');
+    throw new Error(t('errors.productNotFound'));
   }
 
   await api('/cart-items', {
@@ -441,7 +716,7 @@ async function addProductFromScan(scanValue) {
   });
 
   if (!product) {
-    throw new Error(`No product matches scan: ${scanValue}`);
+    throw new Error(t('errors.noProductMatch', { scan: scanValue }));
   }
 
   await addProductToCart(product.id);
@@ -480,7 +755,7 @@ async function closeCart() {
 
 async function checkout() {
   if (!state.cart?.id) {
-    throw new Error('Open a cart first');
+    throw new Error(t('errors.openCartFirst'));
   }
 
   const totals = calculateCartTotals(state.cart);
@@ -507,9 +782,9 @@ async function checkout() {
   });
 
   $('paymentResult').innerHTML = `
-    <strong>Paid ${money(payment.amount)}</strong>
-    <div>Receipt ${receipt.receiptNo}</div>
-    <div class="muted">Payment ID ${payment.id}</div>
+    <strong>${t('dynamic.paid', { amount: money(payment.amount) })}</strong>
+    <div>${t('dynamic.receipt', { receiptNo: receipt.receiptNo })}</div>
+    <div class="muted">${t('dynamic.paymentId', { id: payment.id })}</div>
   `;
 
   flash($('paymentResult'));
@@ -521,24 +796,24 @@ async function checkout() {
 
 function printLastReceipt() {
   if (!state.lastReceipt) {
-    $('paymentResult').innerHTML = '<span class="muted">No receipt to print yet.</span>';
+    $('paymentResult').innerHTML = `<span class="muted">${t('dynamic.noReceiptPrint')}</span>`;
     return;
   }
 
   const printWindow = window.open('', '_blank', 'width=360,height=640');
   if (!printWindow) {
-    $('paymentResult').innerHTML = '<span class="muted">Allow popups to print receipt.</span>';
+    $('paymentResult').innerHTML = `<span class="muted">${t('dynamic.allowPopups')}</span>`;
     return;
   }
 
   printWindow.document.write(`
     <html>
-      <head><title>Receipt ${state.lastReceipt.receiptNo}</title></head>
+      <head><title>${t('print.title', { receiptNo: state.lastReceipt.receiptNo })}</title></head>
       <body style="font-family: Arial, sans-serif; padding: 12px;">
-        <h2>Quantum POS Receipt</h2>
-        <p><strong>Receipt:</strong> ${state.lastReceipt.receiptNo}</p>
-        <p><strong>Total:</strong> ${money(state.lastReceipt.total)}</p>
-        <p><strong>Date:</strong> ${new Date(state.lastReceipt.issuedAt).toLocaleString()}</p>
+        <h2>${t('print.header')}</h2>
+        <p><strong>${t('print.receiptLabel')}</strong> ${state.lastReceipt.receiptNo}</p>
+        <p><strong>${t('print.totalLabel')}</strong> ${money(state.lastReceipt.total)}</p>
+        <p><strong>${t('print.dateLabel')}</strong> ${new Date(state.lastReceipt.issuedAt).toLocaleString()}</p>
       </body>
     </html>
   `);
@@ -549,7 +824,7 @@ function printLastReceipt() {
 
 async function generateForecastWarnings() {
   if (!state.stores[0]) {
-    throw new Error('Load store data first');
+    throw new Error(t('errors.loadStoreDataFirst'));
   }
 
   const forecast = await api('/forecasts/generate', {
@@ -573,7 +848,7 @@ async function bootstrapEmployee() {
     body: JSON.stringify({ fullName, email, password, storeId, role, isActive: true })
   });
 
-  $('bootstrapResult').innerHTML = `<strong>Created</strong><div>${employee.email}</div>`;
+  $('bootstrapResult').innerHTML = `<strong>${t('dynamic.created')}</strong><div>${employee.email}</div>`;
   flash($('bootstrapResult'));
 }
 
@@ -583,6 +858,9 @@ function bindEvents() {
   });
 
   $('refreshAllBtn').addEventListener('click', refreshAll);
+  $('languageSelect').addEventListener('change', (event) => {
+    setLanguage(event.target.value);
+  });
   $('storeSelect').addEventListener('change', (event) => { state.cartDraft.storeId = event.target.value; });
   $('terminalSelect').addEventListener('change', (event) => { state.cartDraft.terminalId = event.target.value; });
   $('productSearch').addEventListener('input', (event) => { state.search = event.target.value; renderProducts(); });
@@ -638,7 +916,7 @@ function bindEvents() {
     state.cart = null;
     state.lastReceipt = null;
     updateConnectionPill();
-    $('employeeMeta').textContent = 'No user loaded';
+    $('employeeMeta').textContent = t('dynamic.noUserLoaded');
     applyRoleAccess();
     renderCart();
     await loadPrivateData();
@@ -664,8 +942,17 @@ function bindEvents() {
 }
 
 async function init() {
+  if (!SUPPORTED_LANGS.includes(state.language)) {
+    state.language = 'en';
+  }
+
+  const languageSelect = $('languageSelect');
+  if (languageSelect) {
+    languageSelect.value = state.language;
+  }
+
+  setLanguage(state.language);
   bindEvents();
-  updateConnectionPill();
   applyRoleAccess();
   await refreshAll();
 }
